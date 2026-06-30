@@ -43,10 +43,15 @@
     path: /usr/local/sbin/vsftpd
   register: vsftpd_installed
 
-# The bundled tarball ships pre-built 32-bit (i386) object files, and modern
-# glibc moved crypt() out of libc into libcrypt. So before building we must:
+# The bundled tarball ships pre-built 32-bit object files, and vsf_findlibs.sh
+# can't locate the libraries under Debian 12's multiarch paths. So before
+# building we:
 #   1) `make clean` to drop the stale .o files (forces a fresh x86-64 compile)
-#   2) append `-lcrypt` to vsf_findlibs.sh so the final link resolves crypt()
+#   2) append the required link flags directly to vsf_findlibs.sh:
+#        -lpam   (pam_* functions)
+#        -lcap   (cap_*  functions)
+#        -ldl    (dynamic loader, needed by PAM)
+#        -lcrypt (crypt(), moved out of libc on modern glibc)
 # -fcommon restores pre-GCC-10 behaviour the 2011 source relies on.
 - name: Build vsftpd 2.3.4 from source
   when: not vsftpd_installed.stat.exists
@@ -56,11 +61,16 @@
         cmd: make clean
         chdir: /usr/local/src/vsftpd-2.3.4
 
-    - name: Link against libcrypt (crypt() moved out of libc on modern glibc)
-      ansible.builtin.lineinfile:
+    - name: Force vsftpd to link against the required libraries
+      ansible.builtin.blockinfile:
         path: /usr/local/src/vsftpd-2.3.4/vsf_findlibs.sh
-        line: echo "-lcrypt"
+        marker: "# {mark} ANSIBLE MANAGED LINK FLAGS"
         insertafter: EOF
+        block: |
+          echo "-lpam"
+          echo "-lcap"
+          echo "-ldl"
+          echo "-lcrypt"
 
     - name: Compile vsftpd 2.3.4
       ansible.builtin.command:

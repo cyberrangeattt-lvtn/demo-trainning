@@ -91,7 +91,6 @@
       chroot_local_user=NO
       secure_chroot_dir=/usr/share/empty
       pam_service_name=vsftpd
-      ftpd_banner=Welcome to the FTP service.
   register: vsftpd_conf
 
 - name: Write the PAM profile for vsftpd

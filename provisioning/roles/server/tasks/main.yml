@@ -47,7 +47,9 @@
 # can't locate the libraries under Debian 12's multiarch paths. So before
 # building we:
 #   1) `make clean` to drop the stale .o files (forces a fresh x86-64 compile)
-#   2) append the required link flags directly to vsf_findlibs.sh:
+#   2) insert the required link flags at the TOP of vsf_findlibs.sh (right
+#      after the shebang) so they are echoed before any exit or conditional
+#      logic in the original script:
 #        -lpam   (pam_* functions)
 #        -lcap   (cap_*  functions)
 #        -ldl    (dynamic loader, needed by PAM)
@@ -65,7 +67,7 @@
       ansible.builtin.blockinfile:
         path: /usr/local/src/vsftpd-2.3.4/vsf_findlibs.sh
         marker: "# {mark} ANSIBLE MANAGED LINK FLAGS"
-        insertafter: EOF
+        insertafter: "#!/bin/sh"
         block: |
           echo "-lpam"
           echo "-lcap"

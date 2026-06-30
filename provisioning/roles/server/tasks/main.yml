@@ -7,21 +7,21 @@
 # ============================================================
 
 # ---------------------- SSH ----------------------
-- name: Install OpenSSH server
-  apt:
-    pkg: "{{ ssh_package }}"
-    state: present
-    update_cache: yes
-  tags:
-    - ssh
+# - name: Install OpenSSH server
+#   apt:
+#     pkg: "{{ ssh_package }}"
+#     state: present
+#     update_cache: yes
+#   tags:
+#     - ssh
 
-- name: Ensure SSH service is running and enabled
-  service:
-    name: "{{ ssh_service }}"
-    state: started
-    enabled: yes
-  tags:
-    - ssh
+# - name: Ensure SSH service is running and enabled
+#   service:
+#     name: "{{ ssh_service }}"
+#     state: started
+#     enabled: yes
+#   tags:
+#     - ssh
 
 # ---------------- Build dependencies ----------------
 - name: Install build dependencies for vsftpd 2.3.4

@@ -18,7 +18,7 @@
 - name: Add password to rockyou wordlist
   ansible.builtin.lineinfile:
     path: /usr/share/wordlists/rockyou.txt
-    line: Password123
+    line: ILoveCTU
     create: true
 
 - name: Remove all other wordlists except rockyou

@@ -1,0 +1,6 @@
+# Basic configuration of all host devices
+
+- name: Install net-tools
+  apt:
+    name: net-tools
+    update_cache: yes

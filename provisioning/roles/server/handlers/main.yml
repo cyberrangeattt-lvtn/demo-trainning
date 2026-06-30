@@ -1,16 +1,13 @@
 ---
-# ============================================================
-# handlers/main.yml
-# Được kích hoạt bởi "notify" trong tasks.
-# ============================================================
+# provisioning/roles/accounts/tasks/main.yml
+#
+# Create the system user "jack" on the server.
+# This is a normal Linux account (login/SSH), NOT an ftpd-specific user.
 
-- name: Reload SSH service
-  service:
-    name: "{{ ssh_service }}"
-    state: reloaded
-
-- name: Restart vsftpd
-  systemd:
-    name: "{{ vsftpd_service_name }}"
-    state: restarted
-    daemon_reload: yes
+- name: Create the system user "jack"
+  ansible.builtin.user:
+    name: jack
+    password: "{{ 'Password123' | password_hash('sha512', 'kypojuniorhacker') }}"
+    shell: /bin/bash
+    create_home: true
+    update_password: always

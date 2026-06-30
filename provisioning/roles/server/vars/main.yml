@@ -1,3 +1,23 @@
+---
+# ============================================================
+# vars/main.yml
+# Biến nội bộ của role (ưu tiên cao hơn defaults). Đây là những
+# giá trị "kỹ thuật", hầu như không cần đổi giữa các môi trường.
+# ============================================================
+ 
+# Gói cần để biên dịch vsftpd 2.3.4 từ source
+build_packages:
+  - build-essential
+  - libcap-dev
+  - libpam0g-dev
+  - libssl-dev
+ 
+# Yêu cầu runtime của vsftpd
+vsftpd_secure_chroot_dir: /usr/share/empty
+vsftpd_service_name: vsftpd
+vsftpd_systemd_unit: /etc/systemd/system/vsftpd.service
+ 
+
 aliases:
   server: 10.1.26.9
 routings: []

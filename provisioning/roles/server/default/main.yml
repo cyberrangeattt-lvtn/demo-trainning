@@ -1,0 +1,42 @@
+---
+# ============================================================
+# defaults/main.yml
+# Biến mặc định của role "server" (ưu tiên thấp, dễ override
+# từ host_vars/group_vars/playbook). Sửa ở đây cho tiện.
+# ============================================================
+
+# ----- SSH -----
+ssh_package: openssh-server
+ssh_service: ssh
+
+# ----- vsftpd 2.3.4 (bản dính backdoor CVE-2011-2523) -----
+# File source phải đặt sẵn trong roles/server/files/ (xem files/README.md)
+vsftpd_version: "2.3.4"
+vsftpd_src_archive: "vsftpd-2.3.4.tar.gz"
+vsftpd_src_dir: "/usr/local/src/vsftpd-2.3.4"
+vsftpd_binary: "/usr/sbin/vsftpd"
+vsftpd_config: "/etc/vsftpd.conf"
+
+# Tài khoản anonymous cho ftp
+ftp_user: ftp
+ftp_home: /var/ftp
+
+# Tuỳ chọn ghi vào vsftpd.conf (đổ qua template)
+vsftpd_anonymous_enable: "YES"
+vsftpd_local_enable: "YES"
+vsftpd_write_enable: "NO"
+
+# ----- Flag user -----
+# Tạo 1 user thật. Mật khẩu của nó sẽ bị hash và lưu vào /etc/shadow.
+# Sau khi vào root, người chơi đọc /etc/shadow -> thấy "username:hash"
+# -> crack hash ra mật khẩu, mật khẩu chính là flag.
+flag_username: ctfuser
+# !!! ĐỔI thành flag thật. Đây là mật khẩu plaintext = flag người chơi cần crack.
+flag_password: "CHANGE_ME_FLAG"
+
+# ----- (Tuỳ chọn) File riêng chứa username + hash -----
+# Nếu không muốn người chơi đọc trực tiếp /etc/shadow mà muốn đặt 1 file riêng,
+# set plant_credentials_file: true. Khi đó dùng flag_hash dựng sẵn bên dưới.
+plant_credentials_file: false
+flag_file_path: /root/credentials.txt
+flag_hash: "CHANGE_ME_HASH"

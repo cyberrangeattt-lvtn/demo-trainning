@@ -1,0 +1,139 @@
+---
+# ============================================================
+# tasks/main.yml
+# Role "server" - dựng máy mục tiêu cho bài lab khai thác
+# vsftpd 2.3.4 (CVE-2011-2523). Gồm: SSH, vsftpd 2.3.4 và
+# file flag (username + hash) đặt ở khu vực chỉ root đọc được.
+# ============================================================
+
+# ---------------------- SSH ----------------------
+- name: Install OpenSSH server
+  apt:
+    pkg: "{{ ssh_package }}"
+    state: present
+    update_cache: yes
+  tags:
+    - ssh
+
+- name: Ensure SSH service is running and enabled
+  service:
+    name: "{{ ssh_service }}"
+    state: started
+    enabled: yes
+  tags:
+    - ssh
+
+# ---------------- Build dependencies ----------------
+- name: Install build dependencies for vsftpd 2.3.4
+  apt:
+    pkg: "{{ build_packages }}"
+    state: present
+    update_cache: yes
+  tags:
+    - ftp
+
+# ------------- Triển khai & biên dịch vsftpd 2.3.4 -------------
+- name: Copy vsftpd 2.3.4 source archive to target
+  copy:
+    src: "{{ vsftpd_src_archive }}"
+    dest: "/usr/local/src/{{ vsftpd_src_archive }}"
+    mode: '0644'
+  tags:
+    - ftp
+
+- name: Extract vsftpd 2.3.4 source
+  unarchive:
+    src: "/usr/local/src/{{ vsftpd_src_archive }}"
+    dest: /usr/local/src/
+    remote_src: yes
+    creates: "{{ vsftpd_src_dir }}/Makefile"
+  tags:
+    - ftp
+
+- name: Compile vsftpd 2.3.4
+  command: make
+  args:
+    chdir: "{{ vsftpd_src_dir }}"
+    creates: "{{ vsftpd_src_dir }}/vsftpd"
+  tags:
+    - ftp
+
+- name: Install vsftpd binary into /usr/sbin
+  copy:
+    src: "{{ vsftpd_src_dir }}/vsftpd"
+    dest: "{{ vsftpd_binary }}"
+    remote_src: yes
+    mode: '0755'
+  tags:
+    - ftp
+
+# ---------------- Yêu cầu runtime ----------------
+- name: Create secure_chroot_dir required by vsftpd
+  file:
+    path: "{{ vsftpd_secure_chroot_dir }}"
+    state: directory
+    mode: '0755'
+  tags:
+    - ftp
+
+- name: Ensure ftp anonymous user exists
+  user:
+    name: "{{ ftp_user }}"
+    home: "{{ ftp_home }}"
+    shell: /usr/sbin/nologin
+    create_home: yes
+  tags:
+    - ftp
+
+# ------------- Config + service (từ template) -------------
+- name: Deploy vsftpd.conf
+  template:
+    src: vsftpd.conf.j2
+    dest: "{{ vsftpd_config }}"
+    mode: '0644'
+  notify: Restart vsftpd
+  tags:
+    - ftp
+
+- name: Deploy vsftpd systemd unit
+  template:
+    src: vsftpd.service.j2
+    dest: "{{ vsftpd_systemd_unit }}"
+    mode: '0644'
+  notify: Restart vsftpd
+  tags:
+    - ftp
+
+- name: Enable and start vsftpd
+  systemd:
+    name: "{{ vsftpd_service_name }}"
+    state: started
+    enabled: yes
+    daemon_reload: yes
+  tags:
+    - ftp
+
+# ---------------------- Flag ----------------------
+# Tạo user thật -> hash mật khẩu rơi vào /etc/shadow. Đây chính là "file chứa
+# username và chuỗi hash" mà người chơi tìm thấy sau khi chiếm được root.
+- name: Create the flag user (password hash lands in /etc/shadow)
+  user:
+    name: "{{ flag_username }}"
+    password: "{{ flag_password | password_hash('sha512') }}"
+    shell: /bin/bash
+    create_home: yes
+  tags:
+    - flag
+
+# (Tuỳ chọn) Đặt thêm 1 file riêng chứa username + hash, nếu không muốn người
+# chơi đọc trực tiếp /etc/shadow. Chỉ chạy khi plant_credentials_file = true.
+- name: Plant a separate credentials file (root only)
+  template:
+    src: credentials.txt.j2
+    dest: "{{ flag_file_path }}"
+    owner: root
+    group: root
+    mode: '0600'
+  when: plant_credentials_file | bool
+  tags:
+    - flag

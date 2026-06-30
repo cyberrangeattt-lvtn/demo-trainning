@@ -1,0 +1,16 @@
+---
+# ============================================================
+# handlers/main.yml
+# Được kích hoạt bởi "notify" trong tasks.
+# ============================================================
+
+- name: Reload SSH service
+  service:
+    name: "{{ ssh_service }}"
+    state: reloaded
+
+- name: Restart vsftpd
+  systemd:
+    name: "{{ vsftpd_service_name }}"
+    state: restarted
+    daemon_reload: yes

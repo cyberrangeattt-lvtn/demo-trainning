@@ -4,15 +4,19 @@
     path: /etc/hosts
     line: "{{ item.value }} {{ item.key }}"
 
-- name: Remove wordlists
+- name: Add password to rockyou wordlist
+  lineinfile:
+    path: /usr/share/wordlists/rockyou.txt
+    line: Password123
+
+- name: Remove all other wordlists except rockyou
   file:
-      path: "/usr/share/wordlists/{{ item }}"
-      state: absent
-  with_items:
-    -  dirb
-    -  dirbuster
-    -  fern-wifi
-    -  metasploit
-    -  nmap.lst
-    -  wfuzz
-    -  rockyou.txt.gz
+    path: "/usr/share/wordlists/{{ item }}"
+    state: absent
+  loop:
+    - dirb
+    - dirbuster
+    - fern-wifi
+    - metasploit
+    - nmap.lst
+    - wfuzz

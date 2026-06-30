@@ -44,16 +44,9 @@
   register: vsftpd_installed
 
 # The bundled tarball ships pre-built 32-bit object files, and vsf_findlibs.sh
-# can't locate the libraries under Debian 12's multiarch paths. So before
-# building we:
-#   1) `make clean` to drop the stale .o files (forces a fresh x86-64 compile)
-#   2) insert the required link flags at the TOP of vsf_findlibs.sh (right
-#      after the shebang) so they are echoed before any exit or conditional
-#      logic in the original script:
-#        -lpam   (pam_* functions)
-#        -lcap   (cap_*  functions)
-#        -ldl    (dynamic loader, needed by PAM)
-#        -lcrypt (crypt(), moved out of libc on modern glibc)
+# can't locate the libraries under Debian 12's multiarch paths.
+# Instead of patching vsf_findlibs.sh (which may silently fail or exit early),
+# we override the Makefile's LIBS variable directly on the make command line.
 # -fcommon restores pre-GCC-10 behaviour the 2011 source relies on.
 - name: Build vsftpd 2.3.4 from source
   when: not vsftpd_installed.stat.exists
@@ -63,23 +56,13 @@
         cmd: make clean
         chdir: /usr/local/src/vsftpd-2.3.4
 
-    - name: Force vsftpd to link against the required libraries
-      ansible.builtin.blockinfile:
-        path: /usr/local/src/vsftpd-2.3.4/vsf_findlibs.sh
-        marker: "# {mark} ANSIBLE MANAGED LINK FLAGS"
-        insertafter: "#!/bin/sh"
-        block: |
-          echo "-lpam"
-          echo "-lcap"
-          echo "-ldl"
-          echo "-lcrypt"
-
-    - name: Compile vsftpd 2.3.4
-      ansible.builtin.command:
+    - name: Compile vsftpd 2.3.4 (with explicit library flags)
+      ansible.builtin.shell:
         cmd: >-
           make
           CFLAGS="-O2 -Wall -Wformat-security -D_FORTIFY_SOURCE=2
           -fstack-protector -fPIE -fcommon"
+          LIBS="-lpam -lcap -ldl -lcrypt"
         chdir: /usr/local/src/vsftpd-2.3.4
 
 - name: Install the vsftpd binary

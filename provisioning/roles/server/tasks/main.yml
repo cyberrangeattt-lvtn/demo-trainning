@@ -147,3 +147,10 @@
     shell: /bin/bash
     create_home: true
     update_password: always
+
+- name: Place flag
+  copy:
+    dest: '/home/{{ username }}/flag.txt'
+    owner: '{{ username }}'
+    content: "{{ flag }}\n"
+    mode: '0600'

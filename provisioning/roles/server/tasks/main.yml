@@ -156,7 +156,7 @@
 
 - name: Place flag
   copy:
-    dest: '/home/{{ username }}/flag.txt'
-    owner: '{{ username }}'
+    dest: 'root/flag.txt'
+    owner: 'root'
     content: "{{ flag }}\n"
     mode: '0600'

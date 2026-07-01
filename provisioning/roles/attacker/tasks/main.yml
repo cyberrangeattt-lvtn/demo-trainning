@@ -32,3 +32,10 @@
     - metasploit
     - nmap.lst
     - wfuzz
+
+- name: Add passwords file to the home directory
+  copy:
+    src: passlist.txt
+    dest: /usr/share/wordlists/passlist.txt
+    owner: user
+    mode: '0644'
